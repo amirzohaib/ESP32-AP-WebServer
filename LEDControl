@@ -1,0 +1,86 @@
+#include <WiFi.h>
+#include <WebServer.h>
+
+// Replace with your desired AP credentials
+const char* ssid = "ESP32-LED-Control";
+const char* password = "12345678";
+
+// Define LED pins
+const int led1 = 2;
+const int led2 = 4;
+
+// Create a web server on port 80
+WebServer server(80);
+
+// HTML page with buttons
+const char* htmlPage = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ESP32 LED Control</title>
+</head>
+<body>
+  <h2>Control LEDs</h2>
+  <button onclick="location.href='/led1/on'">Turn ON LED 1</button>
+  <button onclick="location.href='/led1/off'">Turn OFF LED 1</button><br><br>
+  <button onclick="location.href='/led2/on'">Turn ON LED 2</button>
+  <button onclick="location.href='/led2/off'">Turn OFF LED 2</button>
+</body>
+</html>
+)rawliteral";
+
+void handleRoot() {
+  server.send(200, "text/html", htmlPage);
+}
+
+void handleLED1On() {
+  digitalWrite(led1, HIGH);
+  server.sendHeader("Location", "/");
+  server.send(303);
+}
+
+void handleLED1Off() {
+  digitalWrite(led1, LOW);
+  server.sendHeader("Location", "/");
+  server.send(303);
+}
+
+void handleLED2On() {
+  digitalWrite(led2, HIGH);
+  server.sendHeader("Location", "/");
+  server.send(303);
+}
+
+void handleLED2Off() {
+  digitalWrite(led2, LOW);
+  server.sendHeader("Location", "/");
+  server.send(303);
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  // Set LED pins as outputs
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+
+  // Start Wi-Fi in AP mode
+  WiFi.softAP(ssid, password);
+  Serial.println("Access Point Started");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.softAPIP());
+
+  // Define routes
+  server.on("/", handleRoot);
+  server.on("/led1/on", handleLED1On);
+  server.on("/led1/off", handleLED1Off);
+  server.on("/led2/on", handleLED2On);
+  server.on("/led2/off", handleLED2Off);
+
+  server.begin();
+  Serial.println("Web server started");
+}
+
+void loop() {
+  server.handleClient();
+}
